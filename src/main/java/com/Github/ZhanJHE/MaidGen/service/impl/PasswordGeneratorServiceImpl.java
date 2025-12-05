@@ -2,9 +2,14 @@ package com.Github.ZhanJHE.MaidGen.service.impl;
 
 import com.Github.ZhanJHE.MaidGen.model.PasswordOptions;
 import com.Github.ZhanJHE.MaidGen.service.PasswordGeneratorService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.security.SecureRandom;
+import java.util.List;
+import java.util.Random;
 
 /**
  * 密码生成器服务实现类
@@ -12,47 +17,34 @@ import java.security.SecureRandom;
 @Service
 public class PasswordGeneratorServiceImpl implements PasswordGeneratorService {
 
-    // 定义大写字母、小写字母、数字和特殊字符的字符集
-    private static final String UPPER_CASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private static final String LOWER_CASE = "abcdefghijklmnopqrstuvwxyz";
-    private static final String NUMBERS = "0123456789";
-    private static final String SPECIAL_CHARACTERS = "!@#$%^&*()-_=+<>?";
+    private static final Random RANDOM = new SecureRandom();
+    private List<String> words;
+
+    public PasswordGeneratorServiceImpl() {
+        try {
+            // 从JSON文件中加载单词列表
+            InputStream inputStream = TypeReference.class.getResourceAsStream("/words.json");
+            words = new ObjectMapper().readValue(inputStream, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            throw new RuntimeException("无法加载单词列表", e);
+        }
+    }
 
     /**
      * 生成密码
      *
-     * @param options 密码生成选项
+     * @param options 密码选项
      * @return 生成的密码
      */
     @Override
     public String generatePassword(PasswordOptions options) {
+        if (words == null || words.isEmpty()) {
+            throw new IllegalArgumentException("单词列表为空，无法生成密码");
+        }
+
         StringBuilder password = new StringBuilder();
-        String availableChars = "";
-
-        // 根据用户选择，构建可用字符集
-        if (options.isUseUpperCase()) {
-            availableChars += UPPER_CASE;
-        }
-        if (options.isUseLowerCase()) {
-            availableChars += LOWER_CASE;
-        }
-        if (options.isUseNumbers()) {
-            availableChars += NUMBERS;
-        }
-        if (options.isUseSpecialCharacters()) {
-            availableChars += SPECIAL_CHARACTERS;
-        }
-
-        // 如果没有选择任何字符类型，则抛出异常
-        if (availableChars.isEmpty()) {
-            throw new IllegalArgumentException("必须至少选择一种字符类型。");
-        }
-
-        // 使用 SecureRandom 生成随机密码
-        SecureRandom random = new SecureRandom();
         for (int i = 0; i < options.getLength(); i++) {
-            int randomIndex = random.nextInt(availableChars.length());
-            password.append(availableChars.charAt(randomIndex));
+            password.append(words.get(RANDOM.nextInt(words.size())));
         }
 
         return password.toString();

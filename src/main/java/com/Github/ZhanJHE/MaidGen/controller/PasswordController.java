@@ -36,31 +36,15 @@ public class PasswordController implements CommandLineRunner {
         Scanner scanner = new Scanner(System.in);
         StringBuilder finalPassword = new StringBuilder();
 
-        //获取并校验用户输入的总密码段数
         int numberOfSegments = UserInputValidator.getNumberOfSegments(scanner);
+
         for (int i = 1; i <= numberOfSegments; i++) {
             System.out.println("\n--- 第 " + i + " 段密码选项 ---");
             PasswordOptions options = new PasswordOptions();
 
             // 获取用户输入的密码长度
-            System.out.print("请输入第 " + i + " 段密码长度: ");
+            System.out.print("请输入第 " + i + " 段的单词数量: ");
             options.setLength(scanner.nextInt());
-
-            // 获取用户选择是否使用大写字母
-            System.out.print("是否使用大写字母? (y/n): ");
-            options.setUseUpperCase(scanner.next().equalsIgnoreCase("y"));
-
-            // 获取用户选择是否使用小写字母
-            System.out.print("是否使用小写字母? (y/n): ");
-            options.setUseLowerCase(scanner.next().equalsIgnoreCase("y"));
-
-            // 获取用户选择是否使用数字
-            System.out.print("是否使用数字? (y/n): ");
-            options.setUseNumbers(scanner.next().equalsIgnoreCase("y"));
-
-            // 获取用户选择是否使用特殊字符
-            System.out.print("是否使用特殊字符? (y/n): ");
-            options.setUseSpecialCharacters(scanner.next().equalsIgnoreCase("y"));
 
             try {
                 // 生成密码段并追加
