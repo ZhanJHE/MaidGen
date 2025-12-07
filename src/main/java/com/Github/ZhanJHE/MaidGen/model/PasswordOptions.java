@@ -14,6 +14,10 @@ public class PasswordOptions {
     private boolean saveToFile;
     private String savePath;
 
+    public PasswordOptions() {
+        this.passwordSegments = new ArrayList<>();
+    }
+
     public PasswordOptions(Scanner scanner) {
         this.numberOfPasswords = UserInputValidator.getInt(scanner, "请输入要生成的密码总数：", 1, 100);
         this.numberOfSegments = UserInputValidator.getInt(scanner, "请输入密码段数：", 1, 10);

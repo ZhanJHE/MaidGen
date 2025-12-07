@@ -70,7 +70,7 @@ public class PasswordGeneratorService {
      * @param options 包含所有密码生成规则的配置对象。
      * @return 生成的密码列表。
      */
-    private List<String> generatePasswordsToList(PasswordOptions options) {
+    public List<String> generatePasswordsToList(PasswordOptions options) {
         List<String> passwords = new ArrayList<>();//存放生成好的全部密码
         for (int p = 1; p <= options.getNumberOfPasswords(); p++) {
             try {
@@ -81,6 +81,10 @@ public class PasswordGeneratorService {
             }
         }
         return passwords;
+    }
+
+    public PasswordRepository getPasswordRepository() {
+        return passwordRepository;
     }
 
     /**

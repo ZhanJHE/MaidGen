@@ -2,6 +2,7 @@ package com.Github.ZhanJHE.MaidGen;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 
 /**
  * Spring Boot 应用主类
@@ -15,7 +16,9 @@ public class MaidGenApplication {
 	 * @param args 命令行参数
 	 */
 	public static void main(String[] args) {
-		SpringApplication.run(MaidGenApplication.class, args);
+		new SpringApplicationBuilder(MaidGenApplication.class)
+				.headless(false)
+				.run(args);
 	}
 
 }
