@@ -2,7 +2,6 @@ package com.Github.ZhanJHE.MaidGen.service;
 
 import com.Github.ZhanJHE.MaidGen.model.PasswordOptions;
 import com.Github.ZhanJHE.MaidGen.model.PasswordSegmentOptions;
-import com.Github.ZhanJHE.MaidGen.model.PasswordStorage;
 import com.Github.ZhanJHE.MaidGen.model.enums.DataSource;
 import com.Github.ZhanJHE.MaidGen.model.enums.WordCase;
 import com.Github.ZhanJHE.MaidGen.repository.PasswordRepository;
@@ -14,7 +13,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -26,6 +27,10 @@ import java.util.Random;
 public class PasswordGeneratorService {
 
     private final PasswordRepository passwordRepository;
+    /**
+     * 用于生成随机数的实例。
+     */
+    private final Random random = new Random();
     /**
      * 用于生成随机标点符号的字符集。
      */
@@ -46,22 +51,47 @@ public class PasswordGeneratorService {
      * @param options 包含所有密码生成规则的配置对象。
      */
     public void generatePasswords(PasswordOptions options) {
-        PasswordStorage passwordStorage = new PasswordStorage();
+        // 1. 生成密码
+        List<String> generatedPasswords = generatePasswordsToList(options);
+
+        // 2. 打印密码到屏幕
+        displayPasswords(generatedPasswords);
+
+        // 3. 调用Repository保存
+        if (options.isSaveToFile()) {
+            passwordRepository.savePasswords(generatedPasswords, options.getSavePath());
+            System.out.println("\n密码已保存到 " + options.getSavePath());
+        }
+    }
+
+    /**
+     * 根据密码选项生成密码列表。
+     *
+     * @param options 包含所有密码生成规则的配置对象。
+     * @return 生成的密码列表。
+     */
+    private List<String> generatePasswordsToList(PasswordOptions options) {
+        List<String> passwords = new ArrayList<>();//存放生成好的全部密码
         for (int p = 1; p <= options.getNumberOfPasswords(); p++) {
-            System.out.println("\n--- 正在生成第 " + p + " 个密码 ---");
             try {
-                String finalPassword = generateFullPassword(options);
-                System.out.println("\n--- 最终生成的第 " + p + " 个密码 ---");
-                System.out.println(finalPassword);
-                passwordStorage.addPassword(finalPassword);
+                String finalPassword = generateFullPassword(options);//生成一个密码
+                passwords.add(finalPassword);//保存一个密码
             } catch (IllegalArgumentException e) {
-                System.err.println("生成密码时出错: " + e.getMessage());
+                System.err.println("生成第 " + p + " 个密码时出错: " + e.getMessage());
             }
         }
+        return passwords;
+    }
 
-        if (options.isSaveToFile()) {
-            passwordRepository.savePasswords(passwordStorage.getPasswords(), options.getSavePath());
-            System.out.println("\n密码已保存到 " + options.getSavePath());
+    /**
+     * 将生成的密码列表打印到控制台。
+     *
+     * @param passwords 要打印的密码列表。
+     */
+    private void displayPasswords(List<String> passwords) {
+        System.out.println("\n--- 生成的密码 ---");
+        for (int i = 0; i < passwords.size(); i++) {
+            System.out.println("密码 " + (i + 1) + ": " + passwords.get(i));
         }
     }
 
@@ -88,26 +118,24 @@ public class PasswordGeneratorService {
      * @return 生成的密码段字符串。
      */
     public String generatePasswordSegment(PasswordSegmentOptions options) {
-        String segment = "";
         switch (options.getDataSource()) {
-            case RANDOM_PUNCTUATION:
-                segment = generateRandomPunctuation(options.getLength());
-                break;
-            case RANDOM_NUMBERS:
-                segment = generateRandomNumbers(options.getLength());
-                break;
             case EXTERNAL_FILE:
             case WORD_LIST_JSON:
-                List<String> words = getWords(options);
+                List<String> words = getWordsByFile(options);
                 if (words.isEmpty()) {
-                    throw new IllegalArgumentException("单词列表为空。 ");
+                    return "";
                 }
-                Random random = new Random();
-                segment = words.get(random.nextInt(words.size()));
-                segment = applyWordCase(segment, options.getWordCase());
-                break;
+                String word = words.get(random.nextInt(words.size()));
+                return applyWordCase(word, options.getWordCase());
+            case RANDOM_PUNCTUATION:
+                return generateRandomPunctuation(options.getLength());
+            case RANDOM_NUMBERS:
+                return generateRandomNumbers(options.getLength());
+            case CUSTOM_FIELD:
+                return options.getCustomField();
+            default:
+                return "";
         }
-        return segment;
     }
 
     /**
@@ -117,22 +145,31 @@ public class PasswordGeneratorService {
      * @return 从文件或JSON资源中读取的单词列表。
      * @throws RuntimeException 如果加载或解析单词列表时发生IO异常。
      */
-    private List<String> getWords(PasswordSegmentOptions options) {
+    private List<String> getWordsByFile(PasswordSegmentOptions options) {
         try {
             if (options.getDataSource() == DataSource.EXTERNAL_FILE) {
                 return Files.readAllLines(Paths.get(options.getFilePath()));
             } else { // WORD_LIST_JSON
-                String resourcePath = "src/main/resources/words_" + options.getLength() + ".json";
-                InputStream inputStream = getClass().getResourceAsStream(resourcePath);
+                String resourcePath = "words_" + options.getLength() + ".json";
+                ClassLoader classLoader = getClass().getClassLoader();
+                InputStream inputStream = classLoader.getResourceAsStream(resourcePath);
                 if (inputStream == null) {
                     throw new IllegalArgumentException("找不到资源文件： " + resourcePath);
                 }
                 ObjectMapper objectMapper = new ObjectMapper();
-                return objectMapper.readValue(inputStream, new TypeReference<List<String>>() {});
+                Map<String, Object> jsonMap = objectMapper.readValue(inputStream, new TypeReference<Map<String, Object>>() {});
+                @SuppressWarnings("unchecked")
+                List<String> words = (List<String>) jsonMap.get("words");
+                if (words == null) {
+                    throw new IllegalArgumentException("JSON文件 " + resourcePath + " 格式不正确，缺少 'words' 字段。");
+                }
+                return words;
             }
         } catch (IOException e) {
-            throw new RuntimeException("加载或解析单词列表时出错", e);
+            throw new RuntimeException("加载或解析数据源时出错", e);
         }
+    }
+
     /**
      * 生成一个指定长度的随机标点符号字符串。
      *
@@ -141,7 +178,6 @@ public class PasswordGeneratorService {
      */
     private String generateRandomPunctuation(int length) {
         StringBuilder punctuation = new StringBuilder(length);
-        Random random = new Random();
         for (int i = 0; i < length; i++) {
             punctuation.append(PUNCTUATION.charAt(random.nextInt(PUNCTUATION.length())));
         }
@@ -156,7 +192,6 @@ public class PasswordGeneratorService {
      */
     private String generateRandomNumbers(int length) {
         StringBuilder numbers = new StringBuilder(length);
-        Random random = new Random();
         for (int i = 0; i < length; i++) {
             numbers.append(random.nextInt(10));
         }
