@@ -11,12 +11,22 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 仓库类，负责将生成的密码列表保存到文件中。
+ */
 @Repository
 public class PasswordRepository {
+
+    /**
+     * 将密码列表保存到指定的文件路径。如果提供的路径无效或不可写，它将尝试保存到带有时间戳的默认文件名。
+     *
+     * @param passwords 要保存的密码列表。
+     * @param filePath 保存密码文件的目标文件路径。
+     */
     public void savePasswords(List<String> passwords, String filePath) {
         try {
             Path path = Paths.get(filePath);
-            // Ensure parent directories exist. This can prevent some IOExceptions.
+            // 确保父目录存在。这可以防止一些IOExceptions。
             Path parentDir = path.getParent();
             if (parentDir != null) {
                 Files.createDirectories(parentDir);
@@ -26,12 +36,12 @@ public class PasswordRepository {
             System.err.println("警告: 指定的路径 '" + filePath + "' 不可用。原因: " + e.getMessage());
             System.out.println("正在尝试保存到默认路径...");
 
-            // Fallback logic
+            // 回退逻辑
             try {
                 String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
                 String defaultFileName = "Passwords" + passwords.size() + "_" + timeStamp + ".txt";
                 
-                // Save in the current working directory
+                // 保存在当前工作目录中
                 Path defaultPath = Paths.get(defaultFileName);
 
                 Files.write(defaultPath, passwords);

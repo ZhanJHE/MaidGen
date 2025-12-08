@@ -6,17 +6,29 @@ import com.Github.ZhanJHE.MaidGen.util.UserInputValidator;
 
 import java.util.Scanner;
 
+/**
+ * 表示密码中单个段的配置选项。
+ * 这包括数据源、大小写转换、长度以及任何特定于数据源的设置（例如文件路径或自定义字符串）。
+ */
 public class PasswordSegmentOptions {
 
-    private DataSource dataSource;
-    private String filePath; // Optional: Path to external file
-    private String customField; // Optional: Custom user-defined string
-    private WordCase wordCase;
-    private int length;
+    private DataSource dataSource; // 该段的数据源（例如，文件、随机单词）
+    private String filePath; // 可选：外部文件的路径
+    private String customField; // 可选：用户定义的自定义字符串
+    private WordCase wordCase; // 单词的大小写格式（例如，大写、小写）
+    private int length; // 该段的长度
 
+    /**
+     * 默认构造函数。
+     */
     public PasswordSegmentOptions() {
     }
 
+    /**
+     * 从用户输入（通过扫描仪）构造 PasswordSegmentOptions，用于命令行界面。
+     *
+     * @param scanner 用于读取用户输入的扫描仪。
+     */
     public PasswordSegmentOptions(Scanner scanner) {
         // 数据来源
         int dataSourceChoice = UserInputValidator.getInt(scanner, "请选择数据类型 (1: 来源于自定义文件, 2: 随机单词（内置）, 3: 随机标点符号, 4: 随机数字串, 5: 指定字符串): ", 1, 5);
@@ -45,6 +57,11 @@ public class PasswordSegmentOptions {
         System.out.println(this);
     }
 
+    /**
+     * 返回此密码段配置的字符串表示形式。
+     *
+     * @return 包含此段配置摘要的字符串。
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

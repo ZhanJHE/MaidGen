@@ -12,6 +12,10 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 密码生成器的图形用户界面（GUI）。
+ * 允许用户通过交互式表单配置密码选项，包括密码数量、保存选项和多个密码段的详细信息。
+ */
 public class PasswordGeneratorUI extends JFrame {
 
     private final PasswordGeneratorService passwordGeneratorService;
@@ -25,6 +29,11 @@ public class PasswordGeneratorUI extends JFrame {
 
     private final List<PasswordSegmentPanel> segmentPanels = new ArrayList<>();
 
+    /**
+     * 构造一个新的 PasswordGeneratorUI 实例。
+     *
+     * @param passwordGeneratorService 用于生成密码的服务。
+     */
     public PasswordGeneratorUI(PasswordGeneratorService passwordGeneratorService) {
         this.passwordGeneratorService = passwordGeneratorService;
         setTitle("MaidGen - 密码生成器");
@@ -127,10 +136,13 @@ public class PasswordGeneratorUI extends JFrame {
         add(segmentsScrollPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        // Add one segment by default
+        // 默认添加一个密码段
         addSegmentPanel();
     }
 
+    /**
+     * 向UI动态添加一个新的密码段面板。
+     */
     private void addSegmentPanel() {
         PasswordSegmentPanel newSegment = new PasswordSegmentPanel(this::removeSegmentPanel);
         segmentPanels.add(newSegment);
@@ -139,6 +151,11 @@ public class PasswordGeneratorUI extends JFrame {
         segmentsContainerPanel.repaint();
     }
 
+    /**
+     * 从UI中移除指定的密码段面板。
+     *
+     * @param segmentPanel 要移除的面板。
+     */
     private void removeSegmentPanel(PasswordSegmentPanel segmentPanel) {
         segmentPanels.remove(segmentPanel);
         segmentsContainerPanel.remove(segmentPanel);
@@ -146,6 +163,9 @@ public class PasswordGeneratorUI extends JFrame {
         segmentsContainerPanel.repaint();
     }
 
+    /**
+     * 收集用户输入的选项，调用密码生成服务，并在UI上显示结果。
+     */
     private void generatePasswords() {
         try {
             PasswordOptions options = new PasswordOptions();
@@ -185,6 +205,10 @@ public class PasswordGeneratorUI extends JFrame {
         void remove(PasswordSegmentPanel panel);
     }
 
+    /**
+     * 一个内部类，表示用于配置单个密码段的JPanel。
+     * 它包含用于选择数据源、设置长度、大小写等选项的UI组件。
+     */
     private static class PasswordSegmentPanel extends JPanel {
         private final JComboBox<DataSource> dataSourceComboBox;
         private final JTextField filePathField;
@@ -198,6 +222,11 @@ public class PasswordGeneratorUI extends JFrame {
         private final JLabel wordCaseLabel;
         private final JLabel lengthLabel;
 
+        /**
+         * 构造一个新的 PasswordSegmentPanel。
+         *
+         * @param removeListener 用于处理移除此面板的事件的监听器。
+         */
         public PasswordSegmentPanel(SegmentRemoveListener removeListener) {
             setLayout(new GridBagLayout());
             setBorder(BorderFactory.createCompoundBorder(
@@ -280,6 +309,9 @@ public class PasswordGeneratorUI extends JFrame {
             updateComponentVisibility();
         }
 
+        /**
+         * 根据所选数据源更新UI组件的可见性。
+         */
         private void updateComponentVisibility() {
             DataSource selected = (DataSource) dataSourceComboBox.getSelectedItem();
 
@@ -313,6 +345,11 @@ public class PasswordGeneratorUI extends JFrame {
             }
         }
 
+        /**
+         * 从UI组件收集用户输入，并返回一个配置好的PasswordSegmentOptions对象。
+         *
+         * @return 根据当前UI状态配置的PasswordSegmentOptions。
+         */
         public PasswordSegmentOptions getSegmentOptions() {
             PasswordSegmentOptions options = new PasswordSegmentOptions();
             DataSource selectedDataSource = (DataSource) dataSourceComboBox.getSelectedItem();
